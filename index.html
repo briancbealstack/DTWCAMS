@@ -1,358 +1,238 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Detroit & Royal Oak Live Cameras</title>
-<meta name="referrer" content="no-referrer">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    background: #f5f5f5;
-    color: #1a1a1a;
-    min-height: 100vh;
-    padding-bottom: 40px;
-  }
+    <meta charset="UTF-8">
+    <title>DTW Live Cams</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .header {
-    background: #fff;
-    padding: 28px 20px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-bottom: 1px solid #e0e0e0;
-  }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-color: #0f0f0f;
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+        }
 
-  .title {
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    margin-bottom: 4px;
-  }
+        h1 {
+            padding: 24px 16px 6px;
+            font-size: 22px;
+        }
 
-  .subtitle {
-    font-size: 14px;
-    color: #999;
-    margin-bottom: 16px;
-  }
+        .subtitle {
+            color: #aaa;
+            font-size: 13px;
+            padding: 4px 16px 14px;
+        }
 
-  .controls {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-  }
+        .btn-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 0 12px 16px;
+        }
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 22px;
-    border-radius: 24px;
-    font-size: 15px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.15s, opacity 0.15s;
-    -webkit-user-select: none;
-    user-select: none;
-  }
+        .action-btn {
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-  .btn:active { transform: scale(0.96); opacity: 0.85; }
+        .action-btn:active { transform: scale(0.97); }
+        .btn-refresh { background: #333; }
+        .btn-refresh:active { background: #444; }
+        .btn-playall { background: #cc0000; }
+        .btn-playall:active { background: #a00; }
 
-  .btn-dark {
-    background: #2a2a2a;
-    color: #fff;
-  }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            padding: 0 12px 12px;
+        }
 
-  .btn-red {
-    background: #cc0000;
-    color: #fff;
-  }
+        .cam-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1a1a1a;
+            aspect-ratio: 16/9;
+            cursor: pointer;
+        }
 
-  .cam-list {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    max-width: 720px;
-    margin: 0 auto;
-  }
+        .cam-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
 
-  .cam-card {
-    position: relative;
-    border-radius: 14px;
-    overflow: hidden;
-    background: #000;
-    cursor: pointer;
-    aspect-ratio: 16 / 9;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-  }
+        .cam-card img.error { opacity: 0; }
 
-  .cam-card .thumb {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: opacity 0.3s;
-  }
+        .play-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.3);
+            transition: background 0.2s;
+        }
 
-  .cam-card .thumb.fallback {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #556;
-    font-size: 14px;
-  }
+        .cam-card:active .play-overlay {
+            background: rgba(0,0,0,0.5);
+        }
 
-  .play-btn {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 68px;
-    height: 48px;
-    background: #cc0000;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    transition: transform 0.2s, opacity 0.2s;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-  }
+        .play-btn {
+            width: 68px;
+            height: 48px;
+            background: rgba(204, 0, 0, 0.9);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-  .cam-card:hover .play-btn { transform: translate(-50%, -50%) scale(1.08); }
+        .play-btn svg {
+            width: 26px;
+            height: 26px;
+            fill: white;
+            margin-left: 3px;
+        }
 
-  .play-btn svg {
-    width: 24px;
-    height: 24px;
-    fill: #fff;
-    margin-left: 3px;
-  }
+        .cam-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 12px 10px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            font-size: 14px;
+            font-weight: 600;
+            text-align: left;
+            pointer-events: none;
+        }
 
-  .cam-label {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    text-shadow: 0 1px 6px rgba(0,0,0,0.7);
-    pointer-events: none;
-  }
+        .live-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #f00;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 1.5s infinite;
+        }
 
-  .cam-label .dot {
-    width: 10px;
-    height: 10px;
-    background: #cc0000;
-    border-radius: 50%;
-    flex-shrink: 0;
-    animation: pulse 2s infinite;
-  }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
+        .cam-card.playing {
+            cursor: default;
+        }
 
-  .cam-card.playing {
-    cursor: default;
-  }
+        .cam-card.playing iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 2;
+        }
 
-  .cam-card.playing .play-btn,
-  .cam-card.playing .cam-label,
-  .cam-card.playing .thumb {
-    display: none;
-  }
-
-  .cam-card iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
-  .note {
-    text-align: center;
-    padding: 20px;
-    font-size: 12px;
-    color: #aaa;
-    max-width: 720px;
-    margin: 0 auto;
-    line-height: 1.5;
-  }
-
-  .note a { color: #cc0000; text-decoration: none; }
-  .note a:hover { text-decoration: underline; }
-
-  @media (max-width: 480px) {
-    .header { padding: 20px 16px 16px; }
-    .title { font-size: 22px; }
-    .cam-list { padding: 12px; gap: 12px; }
-    .btn { padding: 9px 18px; font-size: 14px; }
-  }
-</style>
+        footer {
+            padding: 20px 16px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+    </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="title">📍 Detroit / Royal Oak Live Cameras</div>
-  <div class="subtitle">Tap a camera to start the stream</div>
-  <div class="controls">
-    <button class="btn btn-dark" onclick="refreshAll()">🔄 Refresh All</button>
-    <button class="btn btn-red" onclick="playAll()">▶ Play All</button>
-  </div>
+<h1>✈️ DTW Live Cameras</h1>
+<p class="subtitle">Tap a camera to start the stream</p>
+
+<div class="btn-row">
+    <button class="action-btn btn-refresh" onclick="resetAll()">🔄 Refresh All</button>
+    <button class="action-btn btn-playall" onclick="playAll()">▶️ Play All</button>
 </div>
 
-<div class="cam-list" id="camList"></div>
+<div class="grid" id="camGrid"></div>
 
-<div class="note">
-  Live feeds via YouTube. If a feed is offline, the stream owner may have restarted it with a new ID.<br>
-  YouTube live stream IDs can change — update the <code>VIDEO_ID</code> values in the HTML source if needed.<br>
-  <a href="https://www.youtube.com/results?search_query=detroit+michigan+live+webcam&sp=EgJAAQ%253D%253D" target="_blank" rel="noopener">Search YouTube for Detroit live streams →</a>
-</div>
+<footer>
+    Streams embedded from YouTube Live.
+</footer>
 
 <script>
-/*
- * ============================================================
- * CAMERA CONFIGURATION
- * To update a feed, change the videoId below.
- * Find live streams: youtube.com → search "detroit webcam live"
- *   → filter by "Live" under Filters
- * ============================================================
- */
-const CAMERAS = [
-  {
-    name: "Detroit River — Dossin Museum",
-    videoId: "lo5OtAdWC2s",
-    description: "BoatNerd 24/7 cam from Belle Isle"
-  },
-  {
-    name: "Downtown Detroit — Campus Martius",
-    videoId: "YmMQTIXNSr4",
-    description: "Campus Martius Park, heart of downtown"
-  },
-  {
-    name: "Detroit — Packard Plant",
-    videoId: "mxGFMo0z8Xg",
-    description: "Historic Packard Automotive Plant"
-  },
-  {
-    name: "Royal Oak / Metro Detroit",
-    videoId: "hUJGKdYO_Tw",
-    description: "Metro Detroit area view"
-  }
-];
+    const cams = [
+        { id: 'lo5OtAdWC2s', label: 'DTW — Cam 1' },
+        { id: 'g4mpc2I5lhc', label: 'DTW — Cam 2' },
+        { id: 'yu0pKQSvYX8', label: 'DTW — Cam 3' },
+        { id: 'AwP_Q6IGwFs', label: 'DTW — Cam 4' },
+    ];
 
-/* ---- Thumbnail loading with fallback ---- */
-function getThumbUrl(videoId, quality) {
-  const q = quality || 'hqdefault';
-  return `https://img.youtube.com/vi/${videoId}/${q}.jpg`;
-}
+    function buildGrid() {
+        const grid = document.getElementById('camGrid');
+        grid.innerHTML = '';
+        const bust = Date.now();
 
-function createCamCard(cam, index) {
-  const card = document.createElement('div');
-  card.className = 'cam-card';
-  card.dataset.index = index;
-  card.dataset.videoId = cam.videoId;
-
-  // Thumbnail image — try maxresdefault, fall back to hqdefault
-  const img = document.createElement('img');
-  img.className = 'thumb';
-  img.alt = cam.name;
-  img.loading = 'lazy';
-  img.crossOrigin = 'anonymous';
-  img.src = getThumbUrl(cam.videoId, 'maxresdefault');
-  img.onerror = function() {
-    this.onerror = function() {
-      // Final fallback: dark gradient background
-      this.style.display = 'none';
-      const fb = document.createElement('div');
-      fb.className = 'thumb fallback';
-      fb.textContent = cam.description;
-      card.insertBefore(fb, card.firstChild);
-    };
-    this.src = getThumbUrl(cam.videoId, 'hqdefault');
-  };
-
-  // Play button overlay
-  const playBtn = document.createElement('div');
-  playBtn.className = 'play-btn';
-  playBtn.innerHTML = '<svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>';
-
-  // Label
-  const label = document.createElement('div');
-  label.className = 'cam-label';
-  label.innerHTML = `<span class="dot"></span> ${cam.name}`;
-
-  card.appendChild(img);
-  card.appendChild(playBtn);
-  card.appendChild(label);
-
-  card.addEventListener('click', function() {
-    if (!this.classList.contains('playing')) {
-      playCam(this);
+        cams.forEach((cam, i) => {
+            const card = document.createElement('div');
+            card.className = 'cam-card';
+            card.id = `cam-${i}`;
+            card.innerHTML = `
+                <img src="https://img.youtube.com/vi/${cam.id}/hqdefault.jpg?t=${bust}"
+                     alt="${cam.label}"
+                     onerror="this.classList.add('error')">
+                <div class="play-overlay">
+                    <div class="play-btn">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                </div>
+                <div class="cam-label"><span class="live-dot"></span>${cam.label}</div>
+            `;
+            card.addEventListener('click', () => loadStream(i));
+            grid.appendChild(card);
+        });
     }
-  });
 
-  return card;
-}
+    function loadStream(index) {
+        const card = document.getElementById(`cam-${index}`);
+        if (card.classList.contains('playing')) return;
 
-function playCam(card) {
-  if (card.classList.contains('playing')) return;
-  card.classList.add('playing');
-  const videoId = card.dataset.videoId;
-
-  const iframe = document.createElement('iframe');
-  // Use youtube-nocookie.com for privacy-enhanced mode (avoids bot warnings)
-  // The key params: autoplay=1, mute=1 (required by browsers for autoplay),
-  // playsinline=1 for iOS, rel=0 to avoid showing unrelated videos
-  iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=0`;
-  iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
-  iframe.allowFullscreen = true;
-  iframe.title = card.querySelector('.cam-label')?.textContent || 'Live Camera';
-
-  card.appendChild(iframe);
-}
-
-function stopCam(card) {
-  card.classList.remove('playing');
-  const iframe = card.querySelector('iframe');
-  if (iframe) iframe.remove();
-  // Re-show thumb
-  const thumb = card.querySelector('.thumb');
-  if (thumb) thumb.style.display = '';
-  const fb = card.querySelector('.fallback');
-  if (fb) fb.style.display = '';
-}
-
-function refreshAll() {
-  document.querySelectorAll('.cam-card').forEach(card => {
-    stopCam(card);
-  });
-}
-
-function playAll() {
-  document.querySelectorAll('.cam-card').forEach(card => {
-    if (!card.classList.contains('playing')) {
-      playCam(card);
+        const cam = cams[index];
+        card.classList.add('playing');
+        card.innerHTML = `
+            <iframe
+                src="https://www.youtube.com/embed/${cam.id}?autoplay=1&mute=1&playsinline=1"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowfullscreen>
+            </iframe>`;
     }
-  });
-}
 
-/* ---- Init ---- */
-const list = document.getElementById('camList');
-CAMERAS.forEach((cam, i) => {
-  list.appendChild(createCamCard(cam, i));
-});
+    function playAll() {
+        cams.forEach((cam, i) => {
+            setTimeout(() => loadStream(i), i * 300);
+        });
+    }
+
+    function resetAll() {
+        buildGrid();
+    }
+
+    buildGrid();
 </script>
 
 </body>
